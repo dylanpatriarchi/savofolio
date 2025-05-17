@@ -40,7 +40,7 @@ function App() {
   const handleGeneratePortfolio = async () => {
     setIsGenerating(true)
     try {
-      const prompt = `Create a professional portfolio website for ${userData.name}.
+      const prompt = `Create a professional portfolio website in English for ${userData.name}.
       
 STYLE: ${userData.style}
 
@@ -63,7 +63,19 @@ SKILLS:
 ${userData.pdfData.skills.join(', ')}
 ` : ''}
 
-Create a responsive, professional, and modern portfolio website using semantic HTML with Bootstrap 5 (NO Tailwind). The site should include all the elements listed above in a coherent design with the "${userData.style}" style and using the specified colors. Return HTML, CSS (with Bootstrap 5 classes) and minimal JavaScript if necessary.`
+IMPORTANT INSTRUCTIONS:
+1. Create the portfolio entirely in ENGLISH
+2. Use responsive, professional, and modern design with Bootstrap 5 (NO Tailwind)
+3. Create a full-width layout using Bootstrap containers properly
+4. Include a responsive navigation with appropriate sections
+5. Use the "${userData.style}" style consistently throughout the design
+6. Apply the specified color palette effectively
+7. Make sure all content sections are properly displayed and formatted
+8. Use semantic HTML5 elements and ensure the site is accessible
+9. Include appropriate animations or transitions based on the style
+10. Use Bootstrap 5 classes for responsive behavior across all device sizes
+
+Return HTML, CSS (with Bootstrap 5 classes) and minimal JavaScript if necessary.`
 
       const code = await ClaudeGenerator.generatePortfolio(prompt)
       setGeneratedCode(code)

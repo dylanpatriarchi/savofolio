@@ -49,7 +49,7 @@ const PromptBuilder = ({ userData, onGenerate, isGenerating }: PromptBuilderProp
         styleSpecificInstructions = 'Clean, modern design with balanced layout and professional aesthetics.';
     }
 
-    const newPrompt = `Create a professional portfolio website for ${userData.name || 'me'}.
+    const newPrompt = `Create a professional portfolio website in English for ${userData.name || 'me'}.
 
 STYLE: ${userData.style}
 STYLE DETAILS: ${styleSpecificInstructions}
@@ -72,14 +72,25 @@ ${userData.pdfData?.education.join('\n') || 'Not specified'}
 SKILLS:
 ${userData.pdfData?.skills.join(', ') || 'Not specified'}
 
-Create a responsive, professional portfolio website using semantic HTML with Bootstrap 5 (NO Tailwind). The site should include all the elements listed above in a coherent design that follows the specified style guidelines. Return HTML, CSS (with Bootstrap 5 classes) and minimal JavaScript if necessary.
+IMPORTANT INSTRUCTIONS:
+1. Create the portfolio entirely in ENGLISH
+2. Use responsive, professional, and modern design with Bootstrap 5 (NO Tailwind)
+3. Create a full-width layout using Bootstrap containers properly
+4. Include a responsive navigation with appropriate sections
+5. Use the "${userData.style}" style consistently throughout the design
+6. Apply the specified color palette effectively
+7. Make sure all content sections are properly displayed and formatted
+8. Use semantic HTML5 elements and ensure the site is accessible
+9. Include appropriate animations or transitions based on the style
+10. Use Bootstrap 5 classes for responsive behavior across all device sizes
 
 Special requirements for the ${userData.style} style:
 - ${getStyleRequirements(userData.style)}
 
 Additional details:
 - Use proper semantic HTML5 elements
-- Ensure responsive design works on mobile, tablet and desktop
+- Ensure layout uses full container width (no centering issues)
+- Create responsive design that works on mobile, tablet and desktop
 - Include smooth transitions and animations when appropriate
 - Optimize for accessibility
 `;

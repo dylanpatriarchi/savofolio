@@ -196,7 +196,7 @@ textarea.form-control {
 .btn-success {
   background-color: var(--success-color);
   border-color: var(--success-color);
-}
+  }
 
 .btn-success:hover {
   background-color: #0fba95;
@@ -319,8 +319,8 @@ textarea.form-control {
   .steps {
     justify-content: center;
     margin-top: 1rem;
-  }
-  
+}
+
   .card-body {
     padding: 20px;
   }
@@ -328,7 +328,7 @@ textarea.form-control {
   .editor-wrapper, 
   .iframe-wrapper {
     height: 300px !important;
-  }
+}
 }
 
 /* Style Preview */
