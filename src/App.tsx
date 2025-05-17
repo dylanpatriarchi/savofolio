@@ -28,6 +28,9 @@ function App() {
 
   const [currentStep, setCurrentStep] = useState<number>(1)
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
+  
+  // Stato per memorizzare il prompt generato
+  const [generatedPrompt, setGeneratedPrompt] = useState<string>('');
 
   const handleUserDataUpdate = (data: UserData) => {
     setUserData(data)
@@ -37,47 +40,16 @@ function App() {
     setCurrentStep(prev => prev + 1)
   }
 
+  const handlePromptGenerated = (prompt: string) => {
+    setGeneratedPrompt(prompt);
+  }
+
   const handleGeneratePortfolio = async () => {
     setIsGenerating(true)
     try {
-      const prompt = `Create a professional portfolio website in English for ${userData.name}.
+      console.log('Generating portfolio with prompt:', generatedPrompt);
       
-STYLE: ${userData.style}
-
-MAIN COLORS: ${userData.colors.join(', ')}
-
-BIO:
-${userData.bio}
-
-PROJECTS:
-${userData.projects.map(p => `- ${p.title}: ${p.description}`).join('\n')}
-
-${userData.pdfData ? `
-EXPERIENCE:
-${userData.pdfData.experience.join('\n')}
-
-EDUCATION:
-${userData.pdfData.education.join('\n')}
-
-SKILLS:
-${userData.pdfData.skills.join(', ')}
-` : ''}
-
-IMPORTANT INSTRUCTIONS:
-1. Create the portfolio entirely in ENGLISH
-2. Use responsive, professional, and modern design with Bootstrap 5 (NO Tailwind)
-3. Create a full-width layout using Bootstrap containers properly
-4. Include a responsive navigation with appropriate sections
-5. Use the "${userData.style}" style consistently throughout the design
-6. Apply the specified color palette effectively
-7. Make sure all content sections are properly displayed and formatted
-8. Use semantic HTML5 elements and ensure the site is accessible
-9. Include appropriate animations or transitions based on the style
-10. Use Bootstrap 5 classes for responsive behavior across all device sizes
-
-Return HTML, CSS (with Bootstrap 5 classes) and minimal JavaScript if necessary.`
-
-      const code = await ClaudeGenerator.generatePortfolio(prompt)
+      const code = await ClaudeGenerator.generatePortfolio(generatedPrompt)
       setGeneratedCode(code)
       
       setCurrentStep(3)
@@ -154,7 +126,8 @@ Return HTML, CSS (with Bootstrap 5 classes) and minimal JavaScript if necessary.
                 <div className="card-body">
                   <PromptBuilder 
                     userData={userData} 
-                    onGenerate={handleGeneratePortfolio} 
+                    onGenerate={handleGeneratePortfolio}
+                    onPromptGenerated={handlePromptGenerated}
                     isGenerating={isGenerating} 
                   />
                 </div>

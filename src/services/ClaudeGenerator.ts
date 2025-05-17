@@ -25,48 +25,58 @@ function logDebug(message: string, data?: any) {
 }
 
 export async function generatePortfolio(prompt: string): Promise<GeneratedCode> {
-  logDebug('Start portfolio generation...');
-  logDebug('Prompt:', prompt);
+  logDebug('Inizio generazione portfolio...');
+  
+  // Stampa il prompt completo per debug
+  console.log("PROMPT COMPLETO:", prompt);
   
   try {
     // Verifica se l'API key è disponibile
     if (!API_KEY) {
-      logDebug('API key not found');
-      throw new Error('API key di Claude non trovata. Verifica il file .env con la variabile VITE_CLAUDE_API_KEY.');
+      logDebug('API key non trovata - uso il generatore demo');
+      return generateDemoPortfolio(prompt);
     }
 
-    logDebug('API key found, preparing request...');
-    
-    // Simuliamo una chiamata API reale con un ritardo
-    logDebug('Sending request to Claude API...');
+    logDebug('API key trovata, preparazione richiesta...');
     
     try {
-      // Questo è un placeholder per l'API di Claude
-      // In una reale implementazione dovresti usare un backend per nascondere la chiave API
+      logDebug('Inviando richiesta a Claude API...');
+      
+      const systemMessage = `You are an expert web developer specializing in portfolio websites.
+Your task is to create a responsive, full-width portfolio website that EXACTLY matches the style and colors specified by the user.
+You MUST use the exact colors provided in the PRIMARY COLOR, SECONDARY COLOR, and ACCENT COLOR fields.
+The style must match the STYLE specified. Use a full-width layout.
+Return complete HTML, CSS, and JS code blocks.`;
+      
+      // Effettua una vera chiamata all'API di Claude 3.7 Sonnet
       const response = await axios.post(
         'https://api.anthropic.com/v1/messages',
         {
-          model: 'claude-3-sonnet-20240229',
+          model: 'claude-3-7-sonnet-20250219',
           max_tokens: 4000,
+          system: systemMessage,
           messages: [
             {
               role: 'user',
               content: prompt
             }
-          ]
+          ],
+          temperature: 0.1, // Ridotta per avere output più deterministici
         },
         {
           headers: {
             'Content-Type': 'application/json',
-            'anthropic-version': '2023-06-01',
-            'x-api-key': API_KEY
+            'x-api-key': API_KEY,
+            'anthropic-version': '2023-06-01'
           }
         }
       );
 
-      logDebug('Response received from Claude API!');
+      logDebug('Risposta ricevuta da Claude API!');
       const data = response.data as ClaudeResponse;
       const generatedText = data.content[0].text;
+
+      logDebug('Testo generato:', generatedText.substring(0, 200) + '...');
 
       // Estrazione di HTML, CSS e JS
       const htmlMatch = generatedText.match(/```html\n([\s\S]*?)```/);
@@ -74,61 +84,34 @@ export async function generatePortfolio(prompt: string): Promise<GeneratedCode> 
       const jsMatch = generatedText.match(/```js\n([\s\S]*?)```/);
       const jsMatch2 = generatedText.match(/```javascript\n([\s\S]*?)```/);
 
-      logDebug('Successfully extracted code from Claude response');
+      if (!htmlMatch) logDebug('ERRORE: HTML non trovato nella risposta');
+      if (!cssMatch) logDebug('ERRORE: CSS non trovato nella risposta');
+      if (!jsMatch && !jsMatch2) logDebug('ERRORE: JavaScript non trovato nella risposta');
+
+      logDebug('Codice estratto con successo dalla risposta di Claude');
       
       return {
-        html: htmlMatch ? htmlMatch[1] : '<div>Errore: HTML non trovato nella risposta</div>',
+        html: htmlMatch ? htmlMatch[1] : '<div class="error-message">Errore: HTML non generato correttamente. Riprova con opzioni diverse.</div>',
         css: cssMatch ? cssMatch[1] : '/* CSS non trovato nella risposta */',
-        js: jsMatch ? jsMatch[1] : (jsMatch2 ? jsMatch2[1] : '// JS non trovato o non necessario')
+        js: jsMatch ? jsMatch[1] : (jsMatch2 ? jsMatch2[1] : '// JavaScript non trovato o non necessario')
       };
-    } catch (apiError) {
+    } catch (apiError: any) {
       // Log dettagliato dell'errore API
-      logDebug('Error during API call', apiError);
-      throw apiError;
+      logDebug('Errore durante la chiamata API', apiError);
+      if (apiError.response) {
+        logDebug('Dettaglio errore:', apiError.response.data);
+      }
+      return generateDemoPortfolio(prompt);
     }
   } catch (error) {
     console.error('Errore chiamando Claude API:', error);
-    logDebug('Using fallback demo content generator...');
-    
-    // Simuliamo un ritardo realistico prima di fornire il contenuto demo
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    
-    // Estraiamo informazioni dal prompt per personalizzare il contenuto demo
-    const nameMatch = prompt.match(/for\s+([^\.]+?)\./) || ['', 'John Doe'];
-    const userName = nameMatch[1].trim();
-    
-    const styleMatch = prompt.match(/STYLE:\s+(\w+)/);
-    const style = styleMatch ? styleMatch[1] : 'modern';
-    
-    const colorsMatch = prompt.match(/MAIN COLORS:\s+([^]+?)(?:\n\n|$)/);
-    const colors = colorsMatch ? colorsMatch[1].split(',').map(c => c.trim()) : ['#3498db', '#2ecc71'];
-    const primaryColor = colors[0] || '#3498db';
-    
-    const bioMatch = prompt.match(/BIO:\s+([^]+?)(?:\n\n|$)/);
-    const bio = bioMatch ? bioMatch[1].trim() : 'A passionate developer';
-    
-    const projectsSection = prompt.match(/PROJECTS:\s+([^]+?)(?:\n\n|$)/);
-    const projectsList = projectsSection ? projectsSection[1].split('\n').filter(p => p.trim()) : [];
-    
-    const skillsMatch = prompt.match(/SKILLS:\s+([^]+?)(?:\n\n|$)/);
-    const skills = skillsMatch ? skillsMatch[1].split(',').map(s => s.trim()) : ['HTML', 'CSS', 'JavaScript'];
-    
-    // Genera HTML demo personalizzato
-    let demoHtml = generateDemoHtml(userName, bio, projectsList, skills, style);
-    let demoCss = generateDemoCss(style, primaryColor);
-    let demoJs = generateDemoJs();
-
-    logDebug('Demo content generated successfully');
-    
-    return {
-      html: demoHtml,
-      css: demoCss,
-      js: demoJs
-    };
+    return generateDemoPortfolio(prompt);
   }
 }
 
-function generateDemoHtml(name: string, bio: string, projects: string[], skills: string[], style: string) {
+function generateDemoHtml(name: string, bio: string, projects: string[], skills: string[], style: string, colors: string[]) {
+  const primaryColor = colors[0];
+  
   // Prepare projects HTML
   const projectsHtml = projects.length > 0 
     ? projects.map(p => {
@@ -165,7 +148,6 @@ function generateDemoHtml(name: string, bio: string, projects: string[], skills:
   
   // Choose appropriate classes based on style
   let headerClass = "bg-dark text-white py-5";
-  let containerClass = "container";
   
   if (style === 'dark') {
     headerClass = "bg-dark text-white py-5";
@@ -175,7 +157,6 @@ function generateDemoHtml(name: string, bio: string, projects: string[], skills:
     headerClass = "bg-dark text-white py-5 neon-header";
   } else if (style === 'neobrutalism') {
     headerClass = "bg-warning text-dark py-5 brutalist-header";
-    containerClass = "container brutalist-container";
   }
   
   return `<!DOCTYPE html>
@@ -189,7 +170,7 @@ function generateDemoHtml(name: string, bio: string, projects: string[], skills:
 </head>
 <body class="${style}-theme">
   <nav class="navbar navbar-expand-lg ${style === 'dark' || style === 'neon' || style === 'cyberpunk' ? 'navbar-dark bg-dark' : 'navbar-light bg-light'} sticky-top">
-    <div class="container">
+    <div class="container-fluid">
       <a class="navbar-brand fw-bold" href="#">${name.split(' ')[0]}</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
@@ -217,7 +198,7 @@ function generateDemoHtml(name: string, bio: string, projects: string[], skills:
   </nav>
 
   <header id="home" class="${headerClass}">
-    <div class="${containerClass}">
+    <div class="container-fluid px-5">
       <div class="row align-items-center">
         <div class="col-md-6">
           <h1 class="display-4 fw-bold">${name}</h1>
@@ -236,7 +217,7 @@ function generateDemoHtml(name: string, bio: string, projects: string[], skills:
   
   <main>
     <section id="about" class="py-5">
-      <div class="${containerClass}">
+      <div class="container-fluid px-5">
         <div class="section-header text-center mb-5">
           <h2 class="fw-bold">About Me</h2>
           <div class="section-divider"></div>
@@ -250,7 +231,7 @@ function generateDemoHtml(name: string, bio: string, projects: string[], skills:
     </section>
     
     <section id="projects" class="py-5 bg-light">
-      <div class="${containerClass}">
+      <div class="container-fluid px-5">
         <div class="section-header text-center mb-5">
           <h2 class="fw-bold">My Projects</h2>
           <div class="section-divider"></div>
@@ -262,7 +243,7 @@ function generateDemoHtml(name: string, bio: string, projects: string[], skills:
     </section>
     
     <section id="skills" class="py-5">
-      <div class="${containerClass}">
+      <div class="container-fluid px-5">
         <div class="section-header text-center mb-5">
           <h2 class="fw-bold">Skills</h2>
           <div class="section-divider"></div>
@@ -278,7 +259,7 @@ function generateDemoHtml(name: string, bio: string, projects: string[], skills:
     </section>
     
     <section id="contact" class="py-5 bg-light">
-      <div class="${containerClass}">
+      <div class="container-fluid px-5">
         <div class="section-header text-center mb-5">
           <h2 class="fw-bold">Get In Touch</h2>
           <div class="section-divider"></div>
@@ -306,7 +287,7 @@ function generateDemoHtml(name: string, bio: string, projects: string[], skills:
   </main>
   
   <footer class="${style === 'dark' || style === 'neon' || style === 'cyberpunk' ? 'bg-dark text-white' : 'bg-light text-dark'} py-4">
-    <div class="${containerClass} text-center">
+    <div class="container-fluid px-5 text-center">
       <div class="social-icons mb-3">
         <a href="#" class="me-3"><i class="bi bi-github"></i></a>
         <a href="#" class="me-3"><i class="bi bi-linkedin"></i></a>
@@ -322,7 +303,11 @@ function generateDemoHtml(name: string, bio: string, projects: string[], skills:
 </html>`;
 }
 
-function generateDemoCss(style: string, primaryColor: string) {
+function generateDemoCss(style: string, colors: string[]) {
+  const primaryColor = colors[0];
+  const secondaryColor = colors[1];
+  const accentColor = colors[2];
+  
   let specialStyles = '';
   
   if (style === 'dark') {
@@ -370,10 +355,6 @@ body {
   border: 3px solid #000;
 }
 
-.brutalist-container {
-  transform: translateX(-5px);
-}
-
 .card {
   border: 3px solid #000;
   box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.9);
@@ -391,11 +372,69 @@ body {
   border: 3px solid #000;
   border-radius: 0;
 }`;
+  } else if (style === 'glassmorphism') {
+    specialStyles = `
+body {
+  background: linear-gradient(135deg, ${primaryColor}20, ${secondaryColor}20);
+  background-attachment: fixed;
+}
+
+.card, .navbar, section {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+}
+
+.btn {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(5px);
+}`;
+  } else if (style === 'cyberpunk') {
+    specialStyles = `
+body {
+  background-color: #0a0a1a;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+h1, h2, h3 {
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.section-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, ${primaryColor}, transparent);
+}
+
+.card {
+  border: 1px solid ${primaryColor};
+  background-color: #0a0a1a;
+}
+
+.btn {
+  background: ${primaryColor};
+  color: #000;
+  font-weight: bold;
+  text-transform: uppercase;
+  border: none;
+}
+
+.navbar, footer {
+  background-color: #000 !important;
+  border-bottom: 2px solid ${primaryColor};
+}`;
   }
   
   return `body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   scroll-behavior: smooth;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 /* Header Styles */
@@ -465,6 +504,28 @@ body {
   border-color: ${primaryColor}dd;
 }
 
+/* Secondary elements */
+.btn-secondary, .bg-secondary, .text-secondary {
+  background-color: ${secondaryColor};
+  border-color: ${secondaryColor};
+  color: white;
+}
+
+/* Accent elements */
+.btn-accent, .accent-border {
+  border-color: ${accentColor};
+}
+
+.accent-text, .accent-icon {
+  color: ${accentColor};
+}
+
+/* Container fluid fixes */
+.container-fluid {
+  max-width: 100%;
+  width: 100%;
+}
+
 /* Specific Style Customizations */
 ${specialStyles}
 
@@ -479,6 +540,17 @@ ${specialStyles}
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
   }
+}
+
+/* Full width layout fixes */
+section {
+  width: 100%;
+}
+
+.row {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }`;
 }
 
@@ -534,8 +606,69 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  console.log('Portfolio loaded successfully!');
+  console.log('Portfolio loaded successfully! Full-width layout applied.');
 });`;
+}
+
+// Funzione separata per generare un portfolio demo
+function generateDemoPortfolio(prompt: string): GeneratedCode {
+  logDebug('Utilizzo generatore di contenuto demo...');
+  
+  // Estrai stile e colori dal prompt con regex precise
+  const styleMatch = prompt.match(/STYLE:\s*(\w+)/i);
+  const style = styleMatch ? styleMatch[1].toLowerCase() : 'modern';
+  
+  // Estrai i colori esatti dal prompt
+  let colors = ['#3498db', '#2ecc71', '#f39c12']; // default
+  
+  const primaryColorMatch = prompt.match(/PRIMARY COLOR:\s*(#[0-9a-fA-F]{6})/i);
+  if (primaryColorMatch && primaryColorMatch[1]) {
+    colors[0] = primaryColorMatch[1];
+  }
+  
+  const secondaryColorMatch = prompt.match(/SECONDARY COLOR:\s*(#[0-9a-fA-F]{6})/i);
+  if (secondaryColorMatch && secondaryColorMatch[1]) {
+    colors[1] = secondaryColorMatch[1];
+  }
+  
+  const accentColorMatch = prompt.match(/ACCENT COLOR:\s*(#[0-9a-fA-F]{6})/i);
+  if (accentColorMatch && accentColorMatch[1]) {
+    colors[2] = accentColorMatch[1];
+  }
+  
+  // Estrai nome e bio
+  const nameMatch = prompt.match(/NAME:\s*([^\n]+)/i);
+  const userName = nameMatch ? nameMatch[1].trim() : 'John Doe';
+  
+  const bioMatch = prompt.match(/BIO:\s*([^\n]+(?:\n[^\n]+)*)/i);
+  const bio = bioMatch ? bioMatch[1].trim() : 'A passionate developer';
+  
+  // Estrai progetti, skills, ecc.
+  let projectsList: string[] = [];
+  const projectsSection = prompt.match(/PROJECTS:\s*\n((?:- [^\n]+\n?)+)/i);
+  if (projectsSection && projectsSection[1]) {
+    projectsList = projectsSection[1].split('\n').filter(line => line.trim().startsWith('-'));
+  }
+  
+  let skills: string[] = ['HTML', 'CSS', 'JavaScript'];
+  const skillsMatch = prompt.match(/SKILLS:\s*([^]*?)(?=\n\n|\n[A-Z]+:)/i);
+  if (skillsMatch && skillsMatch[1]) {
+    skills = skillsMatch[1].split(',').map(s => s.trim()).filter(Boolean);
+  }
+  
+  // Genera HTML, CSS e JS
+  logDebug('Generazione HTML con stile:', style);
+  logDebug('Colori usati:', colors);
+  
+  const html = generateDemoHtml(userName, bio, projectsList, skills, style, colors);
+  const css = generateDemoCss(style, colors);
+  const js = generateDemoJs();
+  
+  return {
+    html,
+    css,
+    js
+  };
 }
 
 export default {

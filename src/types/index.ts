@@ -27,6 +27,19 @@ export interface Project {
   link: string;
 }
 
+export interface Education {
+  degree: string;
+  institution: string;
+  years: string;
+}
+
+export interface Experience {
+  position: string;
+  company: string;
+  years: string;
+  description: string;
+}
+
 export interface PDFData {
   name: string;
   experience: string[];

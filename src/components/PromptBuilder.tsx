@@ -4,191 +4,157 @@ import type { UserData } from '../types';
 interface PromptBuilderProps {
   userData: UserData;
   onGenerate: () => void;
+  onPromptGenerated: (prompt: string) => void;
   isGenerating: boolean;
 }
 
-const PromptBuilder = ({ userData, onGenerate, isGenerating }: PromptBuilderProps) => {
+const PromptBuilder = ({ userData, onGenerate, onPromptGenerated, isGenerating }: PromptBuilderProps) => {
+  const [showPrompt, setShowPrompt] = useState<boolean>(false);
   const [promptTemplate, setPromptTemplate] = useState<string>('');
 
   useEffect(() => {
-    // Generate the prompt based on the selected style
-    let styleSpecificInstructions = '';
-    
-    switch(userData.style) {
-      case 'minimal':
-        styleSpecificInstructions = 'Clean, minimalist design with ample white space, subtle animations, and elegant typography. Focus on readability and content.';
-        break;
-      case 'modern':
-        styleSpecificInstructions = 'Contemporary design with balanced layout, smooth transitions, and professional aesthetics.';
-        break;
-      case 'dark':
-        styleSpecificInstructions = 'Dark theme with high contrast elements. Use dark backgrounds with vibrant accent colors.';
-        break;
-      case 'neon':
-        styleSpecificInstructions = 'Vibrant glowing effects with bright colors against dark backgrounds. Include neon-like text effects and borders.';
-        break;
-      case 'retro':
-        styleSpecificInstructions = 'Vintage aesthetics with retro typography, patterns, and color schemes. Consider pixel art elements or 80s/90s inspired design.';
-        break;
-      case 'neobrutalism':
-        styleSpecificInstructions = 'Bold, raw design with strong colors, thick borders and shadows. Include slightly off-grid elements, chunky buttons, and high contrast.';
-        break;
-      case 'glassmorphism':
-        styleSpecificInstructions = 'Frosted glass effect with transparency and subtle borders. Include blur effects, subtle gradients, and layered elements with transparency.';
-        break;
-      case 'cyberpunk':
-        styleSpecificInstructions = 'Futuristic style with neon accents and digital elements. Include glitch effects, tech-inspired graphics, and bold typography.';
-        break;
-      case 'neumorphism':
-        styleSpecificInstructions = 'Soft UI with subtle shadows creating a semi-3D effect. Use soft, extruded elements that appear to push out from the background.';
-        break;
-      case 'gradient':
-        styleSpecificInstructions = 'Smooth color transitions creating depth and movement. Use gradient backgrounds, buttons, and cards that transition between the main colors.';
-        break;
-      default:
-        styleSpecificInstructions = 'Clean, modern design with balanced layout and professional aesthetics.';
-    }
+    // Format the projects for the prompt
+    const projectsFormatted = userData.projects.map(p => 
+      `- ${p.title}: ${p.description}`
+    ).join('\n');
 
-    const newPrompt = `Create a professional portfolio website in English for ${userData.name || 'me'}.
+    // Format the skills 
+    const skillsFormatted = userData.pdfData?.skills?.join(', ') || '';
+
+    // Extract relevant data from PDF
+    const educationFormatted = userData.pdfData?.education?.map(edu => 
+      `- ${edu}`
+    ).join('\n') || '';
+
+    const experienceFormatted = userData.pdfData?.experience?.map(exp => 
+      `- ${exp}`
+    ).join('\n') || '';
+
+    // SEMPLIFICAZIONE MASSIMA DEL PROMPT
+    const fullPrompt = `PORTFOLIO WEBSITE GENERATION
+
+IMPORTANT: Create a website that STRICTLY follows these style and color requirements:
 
 STYLE: ${userData.style}
-STYLE DETAILS: ${styleSpecificInstructions}
+PRIMARY COLOR: ${userData.colors[0]}
+SECONDARY COLOR: ${userData.colors[1]}
+ACCENT COLOR: ${userData.colors[2]}
 
-MAIN COLORS: ${userData.colors.join(', ')}
-COLOR PALETTE: ${userData.colorPalette}
+NAME: ${userData.name}
+BIO: ${userData.bio}
 
-BIO:
-${userData.bio || 'To be filled'}
+${skillsFormatted ? `SKILLS: ${skillsFormatted}` : ''}
 
-PROJECTS:
-${userData.projects.map(p => `- ${p.title}: ${p.description}`).join('\n') || 'No projects specified'}
+${projectsFormatted ? `PROJECTS:\n${projectsFormatted}` : ''}
 
-EXPERIENCE:
-${userData.pdfData?.experience.join('\n') || 'Not specified'}
+${educationFormatted ? `EDUCATION:\n${educationFormatted}` : ''}
 
-EDUCATION:
-${userData.pdfData?.education.join('\n') || 'Not specified'}
+${experienceFormatted ? `EXPERIENCE:\n${experienceFormatted}` : ''}
 
-SKILLS:
-${userData.pdfData?.skills.join(', ') || 'Not specified'}
+REQUIREMENTS:
+1. USE FULL WIDTH LAYOUT (container-fluid, not container)
+2. USE ALL THREE COLORS EXACTLY AS SPECIFIED 
+3. IMPLEMENT THE ${userData.style.toUpperCase()} STYLE FAITHFULLY
+4. MAKE IT RESPONSIVE
+5. RETURN COMPLETE HTML, CSS, AND JS
 
-IMPORTANT INSTRUCTIONS:
-1. Create the portfolio entirely in ENGLISH
-2. Use responsive, professional, and modern design with Bootstrap 5 (NO Tailwind)
-3. Create a full-width layout using Bootstrap containers properly
-4. Include a responsive navigation with appropriate sections
-5. Use the "${userData.style}" style consistently throughout the design
-6. Apply the specified color palette effectively
-7. Make sure all content sections are properly displayed and formatted
-8. Use semantic HTML5 elements and ensure the site is accessible
-9. Include appropriate animations or transitions based on the style
-10. Use Bootstrap 5 classes for responsive behavior across all device sizes
+Format your response with these code blocks:
+\`\`\`html
+(your HTML code)
+\`\`\`
 
-Special requirements for the ${userData.style} style:
-- ${getStyleRequirements(userData.style)}
+\`\`\`css
+(your CSS code)
+\`\`\`
 
-Additional details:
-- Use proper semantic HTML5 elements
-- Ensure layout uses full container width (no centering issues)
-- Create responsive design that works on mobile, tablet and desktop
-- Include smooth transitions and animations when appropriate
-- Optimize for accessibility
+\`\`\`js
+(your JavaScript code)
+\`\`\`
 `;
 
-    setPromptTemplate(newPrompt);
-  }, [userData]);
-
-  // Helper function to get style-specific requirements
-  const getStyleRequirements = (style: string): string => {
-    switch(style) {
-      case 'minimal':
-        return 'Prioritize whitespace, use subtle animations, keep elements clean and simple';
-      case 'modern':
-        return 'Use modern layout techniques, subtle shadows, and appropriate spacing';
-      case 'dark':
-        return 'Use dark backgrounds with high contrast text, add subtle glow effects to important elements';
-      case 'neon':
-        return 'Implement neon-like glowing text effects, use bright colors against dark backgrounds';
-      case 'retro':
-        return 'Include retro typography, vintage color schemes, and possibly pixelated elements';
-      case 'neobrutalism':
-        return 'Use bold colors, thick borders, chunky elements, and strong shadows. Elements should have a raw, unrefined look';
-      case 'glassmorphism':
-        return 'Create translucent, frosted glass effects with blur and transparency. Layer elements for depth';
-      case 'cyberpunk':
-        return 'Add tech-inspired graphics, glitch effects, neon accents, and futuristic elements';
-      case 'neumorphism':
-        return 'Create soft UI elements with subtle shadows that give a 3D extruded effect. Use monochromatic color schemes';
-      case 'gradient':
-        return 'Incorporate smooth gradient transitions between main colors in backgrounds, buttons, and cards';
-      default:
-        return 'Focus on clean design, readability, and professional presentation';
-    }
-  };
+    setPromptTemplate(fullPrompt);
+    onPromptGenerated(fullPrompt);
+  }, [userData, onPromptGenerated]);
 
   return (
-    <div>
-      <div className="mb-4">
-        <div className="d-flex align-items-center mb-3">
-          <i className="bi bi-stars text-primary fs-4 me-2"></i>
-          <h4 className="mb-0 fw-bold">AI Prompt</h4>
-        </div>
-        <p className="text-muted">
-          This is the prompt that will be sent to Claude to generate your portfolio.
-          You can edit it to further customize your request.
-        </p>
-
-        <div className="mb-3">
-          <label htmlFor="promptTemplate" className="form-label">Prompt Template</label>
-          <textarea
-            className="form-control font-monospace"
-            id="promptTemplate"
-            rows={12}
-            value={promptTemplate}
-            onChange={(e) => setPromptTemplate(e.target.value)}
-          ></textarea>
+    <div className="card mb-4">
+      <div className="card-header d-flex justify-content-between align-items-center">
+        <h5 className="mb-0">AI Portfolio Generator</h5>
+        <div className="form-check form-switch">
+          <input 
+            className="form-check-input" 
+            type="checkbox" 
+            id="showPrompt"
+            checked={showPrompt}
+            onChange={() => setShowPrompt(!showPrompt)}
+          />
+          <label className="form-check-label" htmlFor="showPrompt">
+            Show Prompt
+          </label>
         </div>
       </div>
-
-      <div className="mb-4">
-        <div className="card bg-light border-0">
-          <div className="card-body">
-            <h5 className="d-flex align-items-center">
-              <i className="bi bi-lightbulb-fill text-warning me-2"></i>
-              Prompt Tips
-            </h5>
-            <ul className="mb-0">
-              <li>Be specific about the style you want</li>
-              <li>Include any special sections you'd like to have</li>
-              <li>Mention if you want any interactive elements</li>
-              <li>Specify if you have any accessibility requirements</li>
-            </ul>
+      <div className="card-body">
+        {showPrompt ? (
+          <div className="mb-3">
+            <label className="form-label">Prompt:</label>
+            <textarea
+              className="form-control font-monospace"
+              style={{ height: '300px' }}
+              value={promptTemplate}
+              onChange={(e) => {
+                setPromptTemplate(e.target.value);
+                onPromptGenerated(e.target.value);
+              }}
+            />
+          </div>
+        ) : (
+          <p className="card-text">
+            Il sito verrà generato secondo le tue specifiche. Ecco il riepilogo:
+          </p>
+        )}
+        
+        <div className="mb-3">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <strong>Stile:</strong>
+            <span className="badge bg-primary">{userData.style}</span>
+          </div>
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <strong>Colori:</strong>
+            {userData.colors.map((color, index) => (
+              <div 
+                key={index}
+                className="color-preview d-flex align-items-center"
+              >
+                <div
+                  style={{
+                    backgroundColor: color,
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '4px',
+                    border: '1px solid #dee2e6'
+                  }}
+                  title={color}
+                />
+                <small className="ms-1">{color}</small>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
-
-      <div className="d-grid gap-2">
-        <button
-          type="button"
-          className="btn btn-success btn-lg"
+        
+        <button 
+          className="btn btn-primary w-100"
           onClick={onGenerate}
           disabled={isGenerating}
         >
           {isGenerating ? (
             <>
-              <div className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
-              Generating Your Portfolio...
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Generazione in corso...
             </>
           ) : (
-            <>
-              <i className="bi bi-magic me-2"></i>
-              Generate Portfolio
-            </>
+            'Genera Portfolio'
           )}
         </button>
-        <p className="text-center text-muted small mt-2">
-          Generation typically takes about 15-30 seconds
-        </p>
       </div>
     </div>
   );
