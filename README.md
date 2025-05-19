@@ -1,84 +1,65 @@
-# SavoFolio
+# Savofolio
 
-SavoFolio è un'applicazione web che consente agli utenti di generare facilmente un sito portfolio personalizzato utilizzando l'intelligenza artificiale di Claude 3.7 Sonnet.
+Savofolio è un'applicazione web che ti permette di generare automaticamente un portfolio professionale a partire dal tuo CV e da altre informazioni che fornisci.
 
-## Funzionalità
+## Caratteristiche
 
-- **Upload CV**: Carica il tuo CV in formato PDF per estrarre automaticamente informazioni rilevanti
-- **Creazione Portfolio**: Personalizza il tuo portfolio con progetti, biografia e stile
-- **Generazione AI**: Utilizza Claude 3.7 Sonnet per generare codice HTML, CSS e JavaScript
-- **Editor Integrato**: Modifica il codice generato con Monaco Editor
-- **Anteprima Live**: Visualizza in tempo reale le modifiche
-- **Esportazione**: Scarica il tuo portfolio completo come file ZIP pronto per essere pubblicato
+- Caricamento del CV in formato PDF
+- Estrazione automatica del testo dal PDF
+- Inserimento di informazioni professionali aggiuntive
+- Generazione di un sito web portfolio completo (HTML, CSS, JavaScript) tramite OpenAI GPT-4
+- Editor di codice integrato per modificare il portfolio generato
+- Anteprima in tempo reale delle modifiche
+- Esportazione del portfolio come archivio ZIP
 
-## Tecnologie
+## Stack Tecnologico
 
-- React + Vite
-- Bootstrap 5
-- Monaco Editor
-- JSZip
-- API Claude (Anthropic)
-- PDF.js (simulato)
+- **Frontend**: Next.js (React), Bootstrap
+- **Backend API**: Next.js API Routes
+- **Librerie principali**:
+  - `pdf-parse`: Per l'estrazione del testo dai PDF
+  - `monaco-editor`: Editor di codice avanzato
+  - `jszip`: Per la creazione dell'archivio ZIP
+  - `openai`: Per l'integrazione con l'API di OpenAI
 
 ## Installazione
 
-```bash
-# Clona il repository
-git clone https://github.com/tuoutente/savofolio.git
-cd savofolio
+1. Clona questo repository:
+   ```
+   git clone https://github.com/tuoutente/savofolio.git
+   cd savofolio
+   ```
 
-# Installa le dipendenze
-npm install
+2. Installa le dipendenze:
+   ```
+   npm install
+   ```
 
-# Avvia il server di sviluppo
-npm run dev
-```
+3. Crea un file `.env.local` nella radice del progetto con la tua chiave API di OpenAI:
+   ```
+   OPENAI_API_KEY=la-tua-chiave-api
+   ```
 
-## Configurazione API Claude
+4. Avvia il server di sviluppo:
+   ```
+   npm run dev
+   ```
 
-Per utilizzare la generazione AI, è necessario configurare una chiave API di Claude:
-
-1. Visita [Anthropic Console](https://console.anthropic.com/)
-2. Crea un account e genera una chiave API
-3. Crea un file `.env` nella directory principale del progetto
-4. Aggiungi la tua chiave API nel file `.env` come segue:
-
-```
-VITE_CLAUDE_API_KEY=sk-ant-api03-...
-```
-
-**Nota importante**: Il file `.env` non viene tracciato da Git, assicurandosi che la tua chiave API rimanga privata. 
-Non condividere mai direttamente la tua chiave API in repository pubblici.
-
-Se ricevi un errore relativo alla chiave API durante la generazione del portfolio, verifica che:
-- Il file `.env` sia nella directory principale del progetto
-- La variabile sia esattamente chiamata `VITE_CLAUDE_API_KEY`
-- Il valore della chiave API sia valido e attivo
-- L'applicazione sia stata riavviata dopo l'aggiunta del file `.env`
+5. Apri [http://localhost:3000](http://localhost:3000) nel tuo browser.
 
 ## Utilizzo
 
-1. Compila il form con i tuoi dati personali e carica il tuo CV
-2. Scegli uno stile e una palette di colori per il tuo portfolio
-3. Genera il portfolio con Claude
-4. Modifica il codice se necessario
-5. Scarica il portfolio completo in formato ZIP
-6. Pubblica il tuo portfolio online
-
-## Struttura del Progetto
-
-```
-src/
-├── components/         # Componenti React
-├── services/           # Servizi (API, ecc.)
-├── types/              # Definizioni TypeScript
-└── styles/             # File CSS
-```
+1. Carica il tuo CV in formato PDF
+2. Inserisci la tua professione e descrivi i tuoi progetti principali
+3. Clicca su "Genera Portfolio"
+4. Visualizza e modifica il codice HTML, CSS e JavaScript generato
+5. Controlla l'anteprima del portfolio
+6. Scarica il portfolio come file ZIP
 
 ## Licenza
 
 MIT
 
----
+## Note
 
-Creato con ❤️ utilizzando Claude 3.7 Sonnet
+Questo progetto è stato creato come esempio di integrazione tra Next.js e OpenAI. Non memorizza dati personali e tutti i dati vengono elaborati in memoria.
